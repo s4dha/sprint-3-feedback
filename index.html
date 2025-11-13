@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SCG AI-First Sprint 3 Feedback Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #111827;
+    }
+    .dashboard-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+    .header {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      padding: 24px;
+      text-align: center;
+      color: white;
+    }
+    .header h1 {
+      font-size: 2.1rem; font-weight: 800; margin-bottom: 6px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.12);
+    }
+    .header p { font-size: 1rem; opacity: 0.95; }
+    .content { padding: 22px; }
+
+    /* Metrics */
+    .metrics-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+    .metric-card {
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      padding: 16px; border-radius: 14px; text-align: center;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+    .metric-value { font-size: 2rem; font-weight: 800; color: #1f2937; }
+    .metric-label { font-size: 0.95rem; color: #4b5563; font-weight: 600; margin-top: 4px; }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .tab-nav select.tab-btn {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #9ca3af 50%), linear-gradient(135deg, #9ca3af 50%, transparent 50%), linear-gradient(to right, #e5e7eb, #e5e7eb);
+      background-position: calc(100% - 18px) calc(1.1em), calc(100% - 13px) calc(1.1em), calc(100% - 2.6em) 0.4em;
+      background-size: 6px 6px, 6px 6px, 1px 1.6em;
+      background-repeat: no-repeat;
+      padding-right: 2.8em;
+    }
+
+  
+    .tab-btn {
+      background: white;
+      border: 2px solid #e5e7eb;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #4b5563;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .tab-btn:hover {
+      background: #f9fafb;
+      border-color: #4facfe;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+      border-color: #4facfe;
+      box-shadow: 0 4px 16px rgba(79, 172, 254, 0.3);
+    }
+
+    /* Tab Content */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .section { margin-bottom: 28px; }
+    .section-title {
+      font-size: 1.4rem; font-weight: 800; margin-bottom: 12px; color: #111827;
+      border-left: 4px solid #4facfe; padding-left: 10px;
+    }
+
+    /* Team cards grid */
+    .team-comparison {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+    @media (max-width: 1200px) { .team-comparison { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .team-comparison { grid-template-columns: 1fr; } }
+
+    /* Team card */
+    .team-card {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      padding: 14px;
+      height: 500px;
+      overflow: hidden;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .team-card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,0,0,0.08); }
+    @media (max-width: 768px) { .team-card { height: auto; } }
+
+    /* Header */
+    .team-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      row-gap: 6px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 10px;
+    }
+    .team-title {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      text-align: left;
+    }
+    .team-name { font-weight: 900; color: #0f172a; font-size: 1.05rem; line-height: 1.15; }
+    .responded-note { color: #6b7280; font-size: 0.84rem; margin-top: 3px; }
+
+    .header-right { 
+      grid-column: 2 / 3; 
+      display: contents;
+    }
+    .header-division { grid-row: 1 / 2; justify-self: end; }
+
+    .division-pill {
+      align-self: start;
+      background:#e8f0ff; color:#1e40af; padding:6px 10px; border-radius:999px;
+      font-weight: 500; font-size: 0.82rem; white-space: nowrap;
+      border: 1px solid #cfe0ff;
+      display: inline-block;
+    }
+
+    /* Stack */
+    .stack { display: grid; gap: 12px; min-height: 0; overflow: auto; padding-right: 2px; }
+    .row { display: block; }
+    .label { color:#1f2937; font-weight: 800; font-size: 0.9rem; margin-bottom: 6px; }
+    .pill-group { display:flex; flex-wrap: wrap; gap: 6px; }
+
+    /* Data pills */
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 8px; border-radius: 999px; font-weight: 600;
+      font-size: 0.82rem;
+      border: 1px solid #E5E7EB; background: #F8FAFC; color: #111827;
+    }
+    .pill-green { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
+    .pill-amber { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+    .pill-red { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+    .pill-blue { background:#e0f2fe; color:#075985; border-color:#bae6fd; }
+    .pill-teal { background:#ccfbf1; color:#115e59; border-color:#99f6e4; }
+    .pill-rating-5 { background:#10b981; color:#fff; border-color:#10b981; }
+    .pill-rating-4 { background:#34d399; color:#064e3b; border-color:#34d399; }
+    .pill-rating-3 { background:#f59e0b; color:#fff; border-color:#f59e0b; }
+    .pill-soft { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+
+    /* Member chips */
+    .mchip-card {
+      display:inline-flex; align-items:center; gap:4px; padding:3px 7px;
+      border-radius:12px; font-size:0.78rem; color:#0f172a;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .mchip {
+      display:inline-flex; align-items:center; gap:4px; padding:4px 8px;
+      border-radius:12px; font-size:0.78rem; font-weight: 600;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    /* Tables */
+    .comparison-table {
+      background: white; border-radius: 15px; overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.08); margin-bottom: 22px;
+    }
+    .table-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; padding: 16px; font-size: 1.05rem; font-weight: 800;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7f0; vertical-align: top; }
+    th { background: #f8fafc; font-weight: 800; color: #1f2937; }
+    tr:hover { background: #f7fafc; }
+    .answer-block {
+      background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:6px 8px; margin:4px 0;
+    }
+    .answer-block .text { color:#111827; margin-bottom:4px; line-height:1.35; }
+
+    @media (max-width: 768px) {
+      .dashboard-container { margin: 10px; border-radius: 15px; }
+      .content { padding: 18px; }
+      .header { padding: 20px; }
+      .header h1 { font-size: 1.8rem; }
+      .metrics-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+      .team-card { height: auto; }
+      .row { grid-template-columns: 130px 1fr; }
+      .tab-nav { gap: 8px; }
+      .tab-btn { padding: 10px 16px; font-size: 0.85rem; }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+<div class="dashboard-container">
+  <div class="header">
+    <h1>🚀 SCG AI-First Sprint 3 Feedback Dashboard</h1>
+    <p>Comprehensive analysis of team experiences and outcomes</p>
+  </div>
+
+  <div class="content">
+    <!-- Key Metrics -->
+    <div class="metrics-grid">
+      <div class="metric-card"><div class="metric-value" id="avg-rating">-</div><div class="metric-label">Average Rating</div></div>
+      <div class="metric-card"><div class="metric-value" id="total-responses">-</div><div class="metric-label">Total Responses</div></div>
+      <div class="metric-card"><div class="metric-value" id="continuation-rate">-</div><div class="metric-label">Continuation Rate (Yes)</div></div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('overview')">📊 Team Overview</button>
+      <button class="tab-btn" onclick="switchTab('experience')">💡 Sprint Experience & Challenges</button>
+      <button class="tab-btn" onclick="switchTab('future')">🚀 Future Plans & Development</button>
+      <button class="tab-btn" onclick="switchTab('support')">🤝 Support Needs & Barriers</button>
+    </div>
+
+    <!-- Filters -->
+    <div id="filters" class="tab-nav" style="margin-bottom: 12px;">
+      <select id="filter-division" class="tab-btn" style="cursor: default;">
+        <option value="">All Divisions</option>
+      </select>
+    </div>
+
+    <!-- Tab: Team Overview -->
+    <div id="tab-overview" class="tab-content active">
+      <div class="section">
+        <h2 class="section-title">📊 Team Overview</h2>
+        <div class="team-comparison" id="team-cards"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Sprint Experience & Challenges -->
+    <div id="tab-experience" class="tab-content">
+      <div class="section">
+        <h2 class="section-title">💡 Sprint Experience & Challenges</h2>
+        <div class="comparison-table">
+          <div class="table-header">Sprint Experience & Challenges</div>
+          <table><thead><tr><th>Team</th><th>What Worked Best</th><th>Biggest Challenge</th><th>Suggestions for Improvement</th></tr></thead><tbody id="table-experience"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Future Plans & Development -->
+    <div id="tab-future" class="tab-content">
+      <div class="section">
+        <h2 class="section-title">🚀 Future Plans & Development</h2>
+        <div class="comparison-table">
+          <div class="table-header">Future Plans & Development</div>
+          <table><thead><tr><th>Team</th><th>Current Status</th><th>Future Vision</th><th>Next Priority Steps</th><th>Timeline</th></tr></thead><tbody id="table-future"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Support Needs & Barriers -->
+    <div id="tab-support" class="tab-content">
+      <div class="section">
+        <h2 class="section-title">🤝 Support Needs & Barriers</h2>
+        <div class="comparison-table">
+          <div class="table-header">Support Needs & Barriers</div>
+          <table><thead><tr><th>Team</th><th>Support Needed</th><th>Biggest Barriers</th></tr></thead><tbody id="table-support"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Tab switching
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.tab-nav .tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+  event.target.classList.add('active');
+}
+
+(function () {
+  const CSV_URL = 'Sprint_3_Feedback.csv';
+
+  // Column mapping for Sprint 3
+  const COLS = {
+    task: 'Task',
+    team: 'Section 1 - About You : Which Sprint Team are you from?',
+    division: 'Which division are you from?',
+    rating: 'Section 2: Sprint Experience - Overall, how would you rate your experience in the AI-First Sprint?',
+    worked: 'What worked best during the sprint process?',
+    challenge: 'What was the biggest challenge your team faced?',
+    better: 'What could we do better for future sprints?',
+    status: 'Section 3: Solution Status and Next Steps - what is the current status of your solution ?',
+    continue: 'Does your team plan to continue developing the solution beyond the sprint ?',
+    vision: 'If yes, where do you envision taking your solution next?',
+    steps: "Section 4: Next Steps - What are your team's next 2-3 development priorities?",
+    timeline: 'What is your realistic timeline for your next major milestone ?',
+    support: 'Section 5: Support Needed - What type of support would be most valuable for advancing your solution?',
+    support_other: 'If you had indicated "Others" in the previous question, please elaborate on the type of support that you require. ',
+    barriers: 'Section 6: Final Thoughts - What are the biggest barriers you foresee in scaling or adopting your solution?',
+    followup: 'Would your team be interested in periodic check-ins to discuss progress and support ?'
+  };
+
+  // Team headcount from sprint_3_data.js
+  const TEAM_HEADCOUNT = new Map([
+    ['Ask Rico', 2],
+    ['AI Minions', 2],
+    ['KakiBuddy', 3],
+    ['Commpanion', 3],
+    ['BrandMate', 3],
+    ['ThreadThrough', 3],
+    ['Team Insighters', 3],
+    ['LoreEngine', 3],
+    ['Ask BP', 3],
+    ['L[AI]bour Force', 3],
+    ['AccruAI Shark', 3],
+    ['AI Story Makers', 3],
+    ['ClausePal', 3],
+    ['HelloDraft', 3],
+    ['@Learngowhere', 3],
+    ['GDTProductCoachHR', 3],
+    ['OGChart', 3],
+    ['ZenITQ', 3],
+    ['justtrylah', 3],
+    ['WTF: Words That Frustrate', 2],
+  ]);
+
+  // Team -> Division mapping from sprint_3_data.js
+  const TEAM_META = new Map([
+    ['Ask Rico', { divisions: ['CIO Office'] }],
+    ['AI Minions', { divisions: ['Strategy & Transformation', 'CIO Office'] }],
+    ['KakiBuddy', { divisions: ['Comms & Marketing'] }],
+    ['Commpanion', { divisions: ['Comms & Marketing'] }],
+    ['BrandMate', { divisions: ['Comms & Marketing'] }],
+    ['ThreadThrough', { divisions: ['Digital Governance', 'Procurement'] }],
+    ['Team Insighters', { divisions: ['Digital Governance'] }],
+    ['LoreEngine', { divisions: ['Digital Governance'] }],
+    ['Ask BP', { divisions: ['Finance'] }],
+    ['L[AI]bour Force', { divisions: ['Finance'] }],
+    ['AccruAI Shark', { divisions: ['Finance'] }],
+    ['AI Story Makers', { divisions: ['Finance'] }],
+    ['ClausePal', { divisions: ['Legal'] }],
+    ['HelloDraft', { divisions: ['Strategy & Transformation', 'Others', 'Org Excellence'] }],
+    ['@Learngowhere', { divisions: ['People & Organisation'] }],
+    ['GDTProductCoachHR', { divisions: ['People & Organisation', 'Others'] }],
+    ['OGChart', { divisions: ['People & Organisation'] }],
+    ['ZenITQ', { divisions: ['Procurement'] }],
+    ['justtrylah', { divisions: ['Strategy & Transformation'] }],
+    ['WTF: Words That Frustrate', { divisions: ['Strategy & Transformation'] }],
+  ]);
+
+  // Utils
+  const el = (html) => { const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild; };
+  const txt = (v) => (v == null ? '' : String(v).trim());
+  const parseRating = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+
+  // Colors for member chips
+  const MEMBER_COLORS = [
+    '#FFCDD2', '#F8BBD0', '#E1BEE7', '#D1C4E9', '#C5CAE9',
+    '#BBDEFB', '#B3E5FC', '#B2EBF2', '#B2DFDB', '#C8E6C9',
+    '#DCEDC8', '#F0F4C3', '#FFF9C4', '#FFECB3', '#FFE0B2',
+    '#FFCCBC', '#D7CCC8', '#CFD8DC'
+  ];
+  function memberColor(idx) { return MEMBER_COLORS[idx % MEMBER_COLORS.length]; }
+  function getTextColor(bgColor) {
+    const hex = bgColor.replace('#', '');
+    if (hex.length !== 6) return '#0f172a';
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 155 ? '#0f172a' : '#ffffff';
+  }
+
+  // Group rows by team
+  const groupByTeam = (rows) => {
+    const map = new Map();
+    for (const r of rows) {
+      const team = txt(r[COLS.team]) || 'Unknown Team';
+      if (!map.has(team)) map.set(team, []);
+      map.get(team).push(r);
+    }
+    return map;
+  };
+
+  // Pills for categorical states
+  function pillClassForContinue(value) {
+    const v = txt(value).toLowerCase();
+    if (v === 'yes') return 'pill-green';
+    if (v === 'no') return 'pill-red';
+    return 'pill-soft';
+  }
+
+  function pillClassForFollowup(value) {
+    const v = txt(value).toLowerCase();
+    if (v === 'yes') return 'pill-green';
+    if (v === 'maybe') return 'pill-amber';
+    if (v === 'no') return 'pill-red';
+    return 'pill-teal';
+  }
+  
+  function pillClassForStatus(value) {
+    const v = txt(value).toLowerCase();
+    if (v.includes('production')) return 'pill-green';
+    if (v.includes('testing')) return 'pill-blue';
+    if (v.includes('prototype')) return 'pill-teal';
+    if (v.includes('development')) return 'pill-blue';
+    if (v.includes('concept') || v.includes('idea')) return 'pill-amber';
+    return 'pill-soft';
+  }
+  
+  function pillClassForRating(n) {
+    if (n >= 5) return 'pill-rating-5';
+    if (n >= 4) return 'pill-rating-4';
+    return 'pill-rating-3';
+  }
+
+  // Division helpers
+  function getTeamMeta(teamName, fallbackDivision) {
+    const meta = TEAM_META.get(teamName);
+    if (meta) return meta;
+    const division = txt(fallbackDivision) ? [txt(fallbackDivision)] : ['—'];
+    return { divisions: division };
+  }
+  
+  function isCrossDiv(divisions) {
+    return Array.isArray(divisions) && divisions.length > 1;
+  }
+  
+  function divisionPillContent(divisions) {
+    if (isCrossDiv(divisions)) {
+      const title = divisions.join(', ');
+      return `
+        <div class="division-pill" style="background:#EDE9FE; color:#5B21B6; border-color:#DDD6FE;"
+             title="${title}">
+          ✳ Cross-Div
+        </div>
+      `;
+    } else {
+      const d = divisions[0] || '—';
+      return `<div class="division-pill" title="${d}">${d}</div>`;
+    }
+  }
+
+  // Global state for filters
+  let RAW_ROWS = [];
+  let CURRENT_DIVISION = '';
+
+  function getDisplayedDivisions(teamName, teamRows) {
+    const sampleDivision = txt(teamRows[0]?.[COLS.division]);
+    const meta = getTeamMeta(teamName, sampleDivision);
+    return meta.divisions.length ? meta.divisions : (sampleDivision ? [sampleDivision] : ['—']);
+  }
+
+  // Apply filters
+  function filterRows(rows) {
+    if (!CURRENT_DIVISION) return rows;
+
+    const byTeam = groupByTeam(rows);
+    const teamFilterInfo = new Map();
+    for (const [team, teamRows] of byTeam.entries()) {
+      teamFilterInfo.set(team, {
+        divisions: getDisplayedDivisions(team, teamRows)
+      });
+    }
+
+    return rows.filter(r => {
+      const teamName = txt(r[COLS.team]) || 'Unknown Team';
+      const info = teamFilterInfo.get(teamName);
+      if (!info) return true;
+
+      return CURRENT_DIVISION
+        ? info.divisions.includes(CURRENT_DIVISION)
+        : true;
+    });
+  }
+
+  // Sort teams by Division -> Team
+  function sortTeamEntries(byTeam) {
+    return [...byTeam.entries()].sort((a, b) => {
+      const [teamA, rowsA] = a;
+      const [teamB, rowsB] = b;
+
+      const divsA = getDisplayedDivisions(teamA, rowsA).join(', ');
+      const divsB = getDisplayedDivisions(teamB, rowsB).join(', ');
+      if (divsA !== divsB) return divsA.localeCompare(divsB);
+
+      return teamA.localeCompare(teamB);
+    });
+  }
+
+  // Populate filters
+  function populateFilters(rows) {
+    const selDiv = document.getElementById('filter-division');
+    const presentTeams = new Set(rows.map(r => txt(r[COLS.team])).filter(Boolean));
+
+    const divisionsSet = new Set();
+    for (const team of presentTeams) {
+      const meta = TEAM_META.get(team);
+      if (meta && meta.divisions.length) {
+        meta.divisions.forEach(d => divisionsSet.add(d));
+      } else {
+        rows
+          .filter(r => txt(r[COLS.team]) === team)
+          .map(r => txt(r[COLS.division]))
+          .filter(Boolean)
+          .forEach(d => divisionsSet.add(d));
+      }
+    }
+    const divisions = Array.from(divisionsSet).sort((a,b)=>a.localeCompare(b));
+
+    selDiv.innerHTML = '';
+    const allOption = document.createElement('option');
+    allOption.value = '';
+    allOption.textContent = 'All Divisions';
+    selDiv.appendChild(allOption);
+    divisions.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o;
+      opt.textContent = o;
+      selDiv.appendChild(opt);
+    });
+    if (CURRENT_DIVISION && divisions.includes(CURRENT_DIVISION)) {
+      selDiv.value = CURRENT_DIVISION;
+    } else {
+      selDiv.value = '';
+    }
+  }
+
+  function render(rows) {
+    rows = rows.filter(r => txt(r[COLS.team]));
+    RAW_ROWS = rows;
+    populateFilters(RAW_ROWS);
+    const filtered = filterRows(RAW_ROWS);
+
+    // Metrics
+    const ratings = filtered.map(r => parseRating(r[COLS.rating])).filter(n => n != null);
+    const avg = ratings.length ? (ratings.reduce((a,b)=>a+b,0)/ratings.length) : null;
+
+    const contYes = filtered.filter(r => txt(r[COLS.continue]).toLowerCase() === 'yes').length;
+    const contRate = filtered.length ? Math.round((contYes / filtered.length) * 100) : null;
+
+    document.getElementById('avg-rating').textContent = avg != null ? `${(Math.round(avg * 10) / 10).toFixed(1)} / 5.0` : '-';
+    document.getElementById('total-responses').textContent = filtered.length;
+    document.getElementById('continuation-rate').textContent = contRate != null ? `${contRate}%` : '-';
+
+    // Team Overview cards
+    const byTeam = groupByTeam(filtered);
+    const teamCards = document.getElementById('team-cards');
+    teamCards.innerHTML = '';
+
+    const sortedTeams = sortTeamEntries(byTeam);
+
+    sortedTeams.forEach(([teamName, teamRows]) => {
+      const teamTotal = TEAM_HEADCOUNT.get(teamName);
+      const responded = `${teamRows.length}${teamTotal ? ` / ${teamTotal}` : ''}`;
+
+      function buildMemberPills(key, pillClassFn, valueTransform = (v)=>v) {
+        return teamRows.map((r, idx) => {
+          const val = txt(r[key]);
+          if (!val) return '';
+          const display = valueTransform(val);
+          const rid = txt(r[COLS.task]) || `R${idx+1}`;
+          return `
+            <span class="mchip-card pill ${pillClassFn(val)}" title="By: ${rid}">
+              <span>#${idx+1}</span>
+              <span>${display}</span>
+            </span>
+          `;
+        }).filter(Boolean).join('');
+      }
+
+      const ratingPills = teamRows.map((r, idx) => {
+        const n = parseRating(r[COLS.rating]);
+        if (n == null) return '';
+        const rid = txt(r[COLS.task]) || `R${idx+1}`;
+        return `
+          <span class="mchip-card pill ${pillClassForRating(n)}" title="By: ${rid}">
+            <span>#${idx+1}</span>
+            <span>${n.toFixed(1)}</span>
+          </span>
+        `;
+      }).join('');
+
+      const continuePills = buildMemberPills(COLS.continue, pillClassForContinue);
+      const statusPills = buildMemberPills(COLS.status, pillClassForStatus);
+      const followupPills = buildMemberPills(COLS.followup, pillClassForFollowup);
+
+      const divisions = getDisplayedDivisions(teamName, teamRows);
+
+      const card = el(`
+        <div class="team-card">
+          <div class="team-header">
+            <div class="team-title">
+              <div class="team-name">${teamName}</div>
+              <div class="responded-note">(${responded} responded)</div>
+            </div>
+            <div class="header-right">
+              <div class="header-division">
+                ${divisionPillContent(divisions)}
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="row">
+              <div class="label">Rating</div>
+              <div class="pill-group">${ratingPills || '<span class="pill pill-soft">—</span>'}</div>
+            </div>
+            <div class="row">
+              <div class="label">Solution Status</div>
+              <div class="pill-group">${statusPills || '<span class="pill pill-soft">—</span>'}</div>
+            </div>
+            <div class="row">
+              <div class="label">Continue Beyond Sprint</div>
+              <div class="pill-group">${continuePills || '<span class="pill pill-soft">—</span>'}</div>
+            </div>
+            <div class="row">
+              <div class="label">Follow-up Interest</div>
+              <div class="pill-group">${followupPills || '<span class="pill pill-soft">—</span>'}</div>
+            </div>
+          </div>
+        </div>
+      `);
+
+      teamCards.appendChild(card);
+    });
+
+    // Tables
+    const tbodyExp = document.getElementById('table-experience');
+    const tbodyFuture = document.getElementById('table-future');
+    const tbodySupport = document.getElementById('table-support');
+
+    const sortedEntries = sortedTeams;
+
+    function groupAnswersWithMembers(teamRows, key) {
+      const items = [];
+      teamRows.forEach((r, idx) => {
+        const raw = txt(r[key]);
+        if (!raw) return;
+        const parts = raw.split('\n').map(s => txt(s)).filter(Boolean);
+        parts.forEach(p => items.push({ answer: p, idx, id: txt(r[COLS.task]) || `R${idx+1}` }));
+      });
+      const map = new Map();
+      for (const it of items) {
+        if (!map.has(it.answer)) map.set(it.answer, []);
+        map.get(it.answer).push(it);
+      }
+      return map;
+    }
+
+    function respondentLegend(teamRows) {
+      return teamRows.map((r, idx) => {
+        const color = memberColor(idx);
+        const textColor = getTextColor(color);
+        const rid = txt(r[COLS.task]) || `R${idx+1}`;
+        return `<span title="${rid}" class="mchip" style="background:${color}; color:${textColor};">#${idx+1}</span>`;
+      }).join(' ');
+    }
+
+    function renderAnswerCell(teamRows, key) {
+      const grouped = groupAnswersWithMembers(teamRows, key);
+      if (grouped.size === 0) return '<span style="color:#9ca3af;">—</span>';
+      return [...grouped.entries()].map(([answer, members]) => {
+        const chips = members.map(({idx, id}) => {
+          const color = memberColor(idx);
+          const textColor = getTextColor(color);
+          return `<span class="mchip" title="${id}" style="background:${color}; color:${textColor};">#${idx+1}</span>`;
+        }).join(' ');
+        return `<div class="answer-block"><div class="text">${answer}</div><div style="margin-top:4px;">${chips}</div></div>`;
+      }).join('');
+    }
+
+    function teamMetaCell(teamName, teamRows) {
+      const divisions = getDisplayedDivisions(teamName, teamRows);
+      const divHtml = divisionPillContent(divisions);
+      return `
+        <strong>${teamName}</strong><br/>
+        <span style="color:#6b7280; font-size:0.85rem;">respondents: ${teamRows.length}${TEAM_HEADCOUNT.has(teamName) ? ` / ${TEAM_HEADCOUNT.get(teamName)}` : ''}</span><br/>
+        <div style="margin-top:6px;">${respondentLegend(teamRows)}</div>
+        ${divHtml}
+      `;
+    }
+
+    tbodyExp.innerHTML = sortedEntries.map(([team, teamRows]) => `
+      <tr>
+        <td>${teamMetaCell(team, teamRows)}</td>
+        <td>${renderAnswerCell(teamRows, COLS.worked)}</td>
+        <td>${renderAnswerCell(teamRows, COLS.challenge)}</td>
+        <td>${renderAnswerCell(teamRows, COLS.better)}</td>
+      </tr>
+    `).join('');
+
+    tbodyFuture.innerHTML = sortedEntries.map(([team, teamRows]) => `
+      <tr>
+        <td>${teamMetaCell(team, teamRows)}</td>
+        <td>${renderAnswerCell(teamRows, COLS.status)}</td>
+        <td>${renderAnswerCell(teamRows, COLS.vision)}</td>
+        <td>${renderAnswerCell(teamRows, COLS.steps)}</td>
+        <td>${renderAnswerCell(teamRows, COLS.timeline)}</td>
+      </tr>
+    `).join('');
+
+    tbodySupport.innerHTML = sortedEntries.map(([team, teamRows]) => `
+      <tr>
+        <td>${teamMetaCell(team, teamRows)}</td>
+        <td>${renderAnswerCell(teamRows, COLS.support)}</td>
+        <td>${renderAnswerCell(teamRows, COLS.barriers)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Wire filter events
+  function wireFilterEvents() {
+    const selDiv = document.getElementById('filter-division');
+    selDiv.addEventListener('change', () => {
+      CURRENT_DIVISION = selDiv.value;
+      render(RAW_ROWS);
+    });
+  }
+
+  // Load CSV
+  fetch(CSV_URL)
+    .then(resp => resp.ok ? resp.text() : Promise.reject(new Error(`HTTP ${resp.status}`)))
+    .then(text => {
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          wireFilterEvents();
+          render(results.data);
+        },
+        error: (err) => { console.error('CSV parse error:', err); alert('Failed to parse CSV.'); }
+      });
+    })
+    .catch(err => { console.error('CSV load error:', err); alert('Failed to load CSV. Check path/CORS.'); });
+})();
+</script>
+</body>
+</html>
