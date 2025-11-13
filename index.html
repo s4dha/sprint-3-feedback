@@ -66,7 +66,6 @@
       padding-right: 2.8em;
     }
 
-  
     .tab-btn {
       background: white;
       border: 2px solid #e5e7eb;
@@ -150,8 +149,8 @@
     .team-name { font-weight: 900; color: #0f172a; font-size: 1.05rem; line-height: 1.15; }
     .responded-note { color: #6b7280; font-size: 0.84rem; margin-top: 3px; }
 
-    .header-right { 
-      grid-column: 2 / 3; 
+    .header-right {
+      grid-column: 2 / 3;
       display: contents;
     }
     .header-division { grid-row: 1 / 2; justify-self: end; }
@@ -275,7 +274,17 @@
         <h2 class="section-title">💡 Sprint Experience & Challenges</h2>
         <div class="comparison-table">
           <div class="table-header">Sprint Experience & Challenges</div>
-          <table><thead><tr><th>Team</th><th>What Worked Best</th><th>Biggest Challenge</th><th>Suggestions for Improvement</th></tr></thead><tbody id="table-experience"></tbody></table>
+          <table>
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>What Worked Best</th>
+                <th>Biggest Challenge</th>
+                <th>Suggestions for Improvement</th>
+              </tr>
+            </thead>
+            <tbody id="table-experience"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -286,7 +295,18 @@
         <h2 class="section-title">🚀 Future Plans & Development</h2>
         <div class="comparison-table">
           <div class="table-header">Future Plans & Development</div>
-          <table><thead><tr><th>Team</th><th>Current Status</th><th>Future Vision</th><th>Next Priority Steps</th><th>Timeline</th></tr></thead><tbody id="table-future"></tbody></table>
+          <table>
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>Current Status</th>
+                <th>Future Vision</th>
+                <th>Next Priority Steps</th>
+                <th>Timeline</th>
+              </tr>
+            </thead>
+            <tbody id="table-future"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -297,7 +317,16 @@
         <h2 class="section-title">🤝 Support Needs & Barriers</h2>
         <div class="comparison-table">
           <div class="table-header">Support Needs & Barriers</div>
-          <table><thead><tr><th>Team</th><th>Support Needed</th><th>Biggest Barriers</th></tr></thead><tbody id="table-support"></tbody></table>
+          <table>
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>Support Needed</th>
+                <th>Biggest Barriers</th>
+              </tr>
+            </thead>
+            <tbody id="table-support"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -433,7 +462,7 @@ function switchTab(tabName) {
     if (v === 'no') return 'pill-red';
     return 'pill-teal';
   }
-  
+
   function pillClassForStatus(value) {
     const v = txt(value).toLowerCase();
     if (v.includes('production')) return 'pill-green';
@@ -443,7 +472,7 @@ function switchTab(tabName) {
     if (v.includes('concept') || v.includes('idea')) return 'pill-amber';
     return 'pill-soft';
   }
-  
+
   function pillClassForRating(n) {
     if (n >= 5) return 'pill-rating-5';
     if (n >= 4) return 'pill-rating-4';
@@ -457,11 +486,11 @@ function switchTab(tabName) {
     const division = txt(fallbackDivision) ? [txt(fallbackDivision)] : ['—'];
     return { divisions: division };
   }
-  
+
   function isCrossDiv(divisions) {
     return Array.isArray(divisions) && divisions.length > 1;
   }
-  
+
   function divisionPillContent(divisions) {
     if (isCrossDiv(divisions)) {
       const title = divisions.join(', ');
@@ -587,8 +616,9 @@ function switchTab(tabName) {
     const sortedTeams = sortTeamEntries(byTeam);
 
     sortedTeams.forEach(([teamName, teamRows]) => {
-      const teamTotal = TEAM_HEADCOUNT.get(teamName);
-      const responded = `${teamRows.length}${teamTotal ? ` / ${teamTotal}` : ''}`;
+      // Use known headcount, fall back to teamRows.length if somehow missing
+      const teamTotal = TEAM_HEADCOUNT.get(teamName) ?? teamRows.length;
+      const respondedText = `${teamRows.length} / ${teamTotal} responded`;
 
       function buildMemberPills(key, pillClassFn, valueTransform = (v)=>v) {
         return teamRows.map((r, idx) => {
@@ -628,7 +658,7 @@ function switchTab(tabName) {
           <div class="team-header">
             <div class="team-title">
               <div class="team-name">${teamName}</div>
-              <div class="responded-note">(${responded} responded)</div>
+              <div class="responded-note">${respondedText}</div>
             </div>
             <div class="header-right">
               <div class="header-division">
@@ -709,9 +739,12 @@ function switchTab(tabName) {
     function teamMetaCell(teamName, teamRows) {
       const divisions = getDisplayedDivisions(teamName, teamRows);
       const divHtml = divisionPillContent(divisions);
+      const teamTotal = TEAM_HEADCOUNT.get(teamName) ?? teamRows.length;
       return `
         <strong>${teamName}</strong><br/>
-        <span style="color:#6b7280; font-size:0.85rem;">respondents: ${teamRows.length}${TEAM_HEADCOUNT.has(teamName) ? ` / ${TEAM_HEADCOUNT.get(teamName)}` : ''}</span><br/>
+        <span style="color:#6b7280; font-size:0.85rem;">
+          respondents: ${teamRows.length} / ${teamTotal}
+        </span><br/>
         <div style="margin-top:6px;">${respondentLegend(teamRows)}</div>
         ${divHtml}
       `;
